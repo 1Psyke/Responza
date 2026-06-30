@@ -114,7 +114,7 @@ export default function HistoryScreen() {
         {/* Title */}
         <Text style={styles.pageTitle}>HISTORY</Text>
         <Text style={styles.pageSubtitle}>
-          Pick up to 5. They receive alerts & live location.
+          Track previous emergency alerts and how they were resolved.
         </Text>
 
         {loading ? (
