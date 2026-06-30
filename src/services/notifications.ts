@@ -45,12 +45,24 @@ export async function registerForPushNotificationsAsync(uid: string): Promise<st
     // EAS Project ID is required to get the push token in Expo SDK 54
     const projectId = 
       Constants.expoConfig?.extra?.eas?.projectId ?? 
-      Constants.easConfig?.projectId;
+      Constants.easConfig?.projectId ??
+      '6d9539d0-ea65-4f30-8be0-b5bf08d25d6b';
 
-    const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId,
-    });
-    const token = tokenData.data;
+    if (!projectId) {
+      console.warn('[Notification Service] Project ID is unavailable. Push registration skipped.');
+      return null;
+    }
+
+    let token = null;
+    try {
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId,
+      });
+      token = tokenData.data;
+    } catch (tokenErr) {
+      console.error('[Notification Service] Failed to retrieve Expo Push Token:', tokenErr);
+      return null;
+    }
 
     console.log('[Notification Service] Registered Expo Push Token:', token);
 
