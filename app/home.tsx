@@ -11,6 +11,7 @@ import { createAlert } from '../src/services/alerts';
 import { getLocationPayload } from '../src/services/location';
 import { startEmergencyDetection, stopEmergencyDetection } from '../src/services/detection';
 import { registerForPushNotificationsAsync } from '../src/services/notifications';
+import { registerDeviceTokenWithBackend, setupTokenRefreshListener } from '../src/services/fcm';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
@@ -96,6 +97,7 @@ export default function HomeScreen() {
     if (!isFocused) return;
 
     let isMounted = true;
+    let unsubscribeRefresh: (() => void) | null = null;
     const fetchData = async () => {
       try {
         // Onboarding guard check
@@ -123,13 +125,23 @@ export default function HomeScreen() {
           console.error('[HOME] Failed to register push notifications:', pushErr);
         }
 
+        // Register FCM device token in background and setup refresh listener
+        try {
+          await registerDeviceTokenWithBackend(user.uid);
+          if (isMounted) {
+            unsubscribeRefresh = setupTokenRefreshListener(user.uid);
+          }
+        } catch (fcmErr) {
+          console.error('[HOME] Failed to register FCM push notifications:', fcmErr);
+        }
+
         const list = await getContacts(user.uid);
         if (isMounted) {
           // Limit to max 5 dynamic contacts on dashboard
           setContacts(list.slice(0, 5));
         }
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
+      } catch (err) {
+        console.error('[HOME] Error loading dashboard data:', err);
       }
     };
 
@@ -137,6 +149,9 @@ export default function HomeScreen() {
 
     return () => {
       isMounted = false;
+      if (unsubscribeRefresh) {
+        unsubscribeRefresh();
+      }
     };
   }, [isFocused, router]);
 

@@ -6,6 +6,7 @@ import { Colors } from '../constants/theme';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { signIn } from '../src/services/auth';
+import { registerDeviceTokenWithBackend } from '../src/services/fcm';
 
 /**
  * Login Screen
@@ -29,7 +30,15 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await signIn(emailOrPhone.trim(), password);
+      const userCredential = await signIn(emailOrPhone.trim(), password);
+      
+      // Register FCM device token in background
+      try {
+        registerDeviceTokenWithBackend(userCredential.user.uid);
+      } catch (fcmErr) {
+        console.error('[LOGIN] FCM device token registration failed:', fcmErr);
+      }
+
       setLoading(false);
       const completed = await AsyncStorage.getItem('responza_onboarding_completed');
       if (completed === 'true') {
