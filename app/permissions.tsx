@@ -14,7 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { DeviceMotion } from 'expo-sensors';
-import * as Notifications from 'expo-notifications';
+import { requestUserPermission } from '../src/services/fcm';
 import { Colors } from '../constants/theme';
 
 export default function PermissionsScreen() {
@@ -97,8 +97,8 @@ export default function PermissionsScreen() {
   // STEP 2: Notifications request
   const requestNotificationPermission = async () => {
     try {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== 'granted') {
+      const granted = await requestUserPermission();
+      if (!granted) {
         setNotificationDenied(true);
         return;
       }

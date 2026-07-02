@@ -17,7 +17,7 @@ import { getProfile } from '../src/services/profile';
 import { cancelAlert, resolveAlert } from '../src/services/alerts';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../src/services/firebase';
-import { sendAlertNotifications } from '../src/services/notifications';
+import { sendAlertNotifications } from '../src/services/fcm';
 
 export default function PinCancelScreen() {
   const router = useRouter();

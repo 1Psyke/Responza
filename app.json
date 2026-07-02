@@ -46,13 +46,6 @@
           }
         }
       ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/images/icon.png",
-          "color": "#E22D2D"
-        }
-      ],
       "@react-native-firebase/app",
       "@react-native-firebase/messaging"
     ],

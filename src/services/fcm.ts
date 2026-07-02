@@ -148,3 +148,16 @@ export function setupTokenRefreshListener(uid: string): () => void {
 
   return unsubscribe;
 }
+
+/**
+ * Triggers alert notifications.
+ * Since we are migrating to Firebase Cloud Messaging (FCM) and the backend will handle
+ * the actual sending in the next phase, this is a placeholder/stub for now.
+ * 
+ * @param alertId - The ID of the active alert
+ */
+export async function sendAlertNotifications(alertId: string): Promise<void> {
+  console.log('[FCM] sendAlertNotifications triggered for alertId:', alertId);
+  console.log('[FCM] Actual notification dispatch will be handled by the backend in the next phase.');
+}
+

@@ -10,7 +10,6 @@ import { useIsFocused } from '@react-navigation/native';
 import { createAlert } from '../src/services/alerts';
 import { getLocationPayload } from '../src/services/location';
 import { startEmergencyDetection, stopEmergencyDetection } from '../src/services/detection';
-import { registerForPushNotificationsAsync } from '../src/services/notifications';
 import { registerDeviceTokenWithBackend, setupTokenRefreshListener } from '../src/services/fcm';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -118,12 +117,7 @@ export default function HomeScreen() {
           setUserName(profile.name);
         }
 
-        // Register push token in Firestore expoPushTokens array
-        try {
-          await registerForPushNotificationsAsync(user.uid);
-        } catch (pushErr) {
-          console.error('[HOME] Failed to register push notifications:', pushErr);
-        }
+
 
         // Register FCM device token in background and setup refresh listener
         try {
