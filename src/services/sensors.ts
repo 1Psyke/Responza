@@ -73,7 +73,7 @@ function emitEvent(): void {
     rotation,
   };
 
-  console.log(`[Sensor Service] Event - Accel: ${accelerationMagnitude.toFixed(3)}g, Gyro: ${rotation.toFixed(3)} rad/s`);
+  // console.log(`[Sensor Service] Event - Accel: ${accelerationMagnitude.toFixed(3)}g, Gyro: ${rotation.toFixed(3)} rad/s`);
 
   callbacks.forEach((callback) => {
     try {
@@ -98,16 +98,16 @@ export function startSensorMonitoring(updateIntervalMs: number = DEFAULT_CONFIG.
   Gyroscope.setUpdateInterval(updateIntervalMs);
 
   accelSubscription = Accelerometer.addListener((data) => {
-    console.log("[ACCEL CALLBACK FIRED]");
-    console.log("[ACCEL RAW]", data);
+    // console.log("[ACCEL CALLBACK FIRED]");
+    // console.log("[ACCEL RAW]", data);
     lastAccel = { x: data.x, y: data.y, z: data.z };
     emitEvent();
   });
   console.log("[ACCEL LISTENER ATTACHED]");
 
   gyroSubscription = Gyroscope.addListener((data) => {
-    console.log("[GYRO CALLBACK FIRED]");
-    console.log("[GYRO RAW]", data);
+    // console.log("[GYRO CALLBACK FIRED]");
+    // console.log("[GYRO RAW]", data);
     lastGyro = { x: data.x, y: data.y, z: data.z };
     emitEvent();
   });
