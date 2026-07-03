@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
-  SafeAreaView, 
   StyleSheet, 
   Text, 
   TouchableOpacity, 
@@ -9,6 +8,7 @@ import {
   TextInput,
   Platform
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 // @ts-ignore
 import Ionicons from '@expo/vector-icons/Ionicons';

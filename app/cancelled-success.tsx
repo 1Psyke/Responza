@@ -1,12 +1,12 @@
 import React from 'react';
 import { 
-  SafeAreaView, 
   StyleSheet, 
   Text, 
   TouchableOpacity, 
   View, 
   Platform 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 // @ts-ignore
 import Ionicons from '@expo/vector-icons/Ionicons';

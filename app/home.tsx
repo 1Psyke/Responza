@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Alert, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // @ts-ignore
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Colors } from '../constants/theme';
@@ -10,7 +11,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { createAlert } from '../src/services/alerts';
 import { getLocationPayload } from '../src/services/location';
 import { startEmergencyDetection, stopEmergencyDetection } from '../src/services/detection';
-import { registerDeviceTokenWithBackend, setupTokenRefreshListener } from '../src/services/fcm';
+import { registerDeviceTokenWithBackend, setupTokenRefreshListener, setupForegroundListener } from '../src/services/fcm';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const [userName, setUserName] = useState('User');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const isTriggeringAlertRef = useRef(false);
+  const fcmRegisteredRef = useRef(false);
 
   const handleEmergencyTrigger = useCallback(async (triggerType: string) => {
     if (isTriggeringAlertRef.current) return;
@@ -97,6 +99,7 @@ export default function HomeScreen() {
 
     let isMounted = true;
     let unsubscribeRefresh: (() => void) | null = null;
+    let unsubscribeForeground: (() => void) | null = null;
     const fetchData = async () => {
       try {
         // Onboarding guard check
@@ -119,11 +122,15 @@ export default function HomeScreen() {
 
 
 
-        // Register FCM device token in background and setup refresh listener
+        // Register FCM device token in background (only once per session) and setup listeners
         try {
-          await registerDeviceTokenWithBackend(user.uid);
+          if (!fcmRegisteredRef.current) {
+            fcmRegisteredRef.current = true;
+            await registerDeviceTokenWithBackend(user.uid);
+          }
           if (isMounted) {
             unsubscribeRefresh = setupTokenRefreshListener(user.uid);
+            unsubscribeForeground = setupForegroundListener();
           }
         } catch (fcmErr) {
           console.error('[HOME] Failed to register FCM push notifications:', fcmErr);
@@ -145,6 +152,9 @@ export default function HomeScreen() {
       isMounted = false;
       if (unsubscribeRefresh) {
         unsubscribeRefresh();
+      }
+      if (unsubscribeForeground) {
+        unsubscribeForeground();
       }
     };
   }, [isFocused, router]);

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '../constants/theme';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { signUp } from '../src/services/auth';
-import { registerDeviceTokenWithBackend } from '../src/services/fcm';
 
 /**
  * Signup Screen
@@ -44,15 +44,8 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
-      const userCredential = await signUp(email, password, name, phone);
+      await signUp(email, password, name, phone);
       
-      // Register FCM device token in background
-      try {
-        registerDeviceTokenWithBackend(userCredential.user.uid);
-      } catch (fcmErr) {
-        console.error('[SIGNUP] FCM device token registration failed:', fcmErr);
-      }
-
       setLoading(false);
       const completed = await AsyncStorage.getItem('responza_onboarding_completed');
       Alert.alert(

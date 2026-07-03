@@ -1,6 +1,15 @@
-import messaging from '@react-native-firebase/messaging';
+import { 
+  getMessaging, 
+  getToken, 
+  requestPermission, 
+  onTokenRefresh, 
+  onMessage,
+  AuthorizationStatus 
+} from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import { getBackendRoute } from '../config/api';
+
+const messaging = getMessaging();
 
 /**
  * Requests user notification permission.
@@ -8,10 +17,10 @@ import { getBackendRoute } from '../config/api';
  */
 export async function requestUserPermission(): Promise<boolean> {
   try {
-    const authStatus = await messaging().requestPermission();
+    const authStatus = await requestPermission(messaging);
     const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      authStatus === AuthorizationStatus.AUTHORIZED ||
+      authStatus === AuthorizationStatus.PROVISIONAL;
 
     console.log('[FCM] Permission status:', authStatus);
     return enabled;
@@ -33,7 +42,7 @@ export async function getFCMToken(): Promise<string | null> {
       return null;
     }
     
-    const token = await messaging().getToken();
+    const token = await getToken(messaging);
     console.log('[FCM] Generated FCM Token:', token);
     return token;
   } catch (error) {
@@ -112,7 +121,7 @@ export async function registerDeviceTokenWithBackend(uid: string): Promise<boole
  * @returns unsubscribe function
  */
 export function setupTokenRefreshListener(uid: string): () => void {
-  const unsubscribe = messaging().onTokenRefresh(async (token) => {
+  const unsubscribe = onTokenRefresh(messaging, async (token) => {
     console.log('[FCM] Token refreshed:', token);
     try {
       const platform = Platform.OS === 'android' ? 'android' : 'android';
@@ -161,3 +170,15 @@ export async function sendAlertNotifications(alertId: string): Promise<void> {
   console.log('[FCM] Actual notification dispatch will be handled by the backend in the next phase.');
 }
 
+/**
+ * Subscribes to foreground message events and logs details.
+ * @returns unsubscribe function
+ */
+export function setupForegroundListener(): () => void {
+  const unsubscribe = onMessage(messaging, async (remoteMessage) => {
+    console.log('[FCM Foreground] Message ID:', remoteMessage.messageId);
+    console.log('[FCM Foreground] Notification Title:', remoteMessage.notification?.title);
+    console.log('[FCM Foreground] Notification Body:', remoteMessage.notification?.body);
+  });
+  return unsubscribe;
+}

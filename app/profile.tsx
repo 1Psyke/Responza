@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  SafeAreaView, 
   ScrollView, 
   StyleSheet, 
   Text, 
@@ -10,6 +9,7 @@ import {
   ActivityIndicator, 
   Platform 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 // @ts-ignore
 import Ionicons from '@expo/vector-icons/Ionicons';
