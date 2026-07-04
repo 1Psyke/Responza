@@ -8,6 +8,7 @@ import {
 } from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 import { getBackendRoute } from '../config/api';
+import { getCurrentUser } from './auth';
 
 const messaging = getMessaging();
 
@@ -158,16 +159,65 @@ export function setupTokenRefreshListener(uid: string): () => void {
   return unsubscribe;
 }
 
-/**
- * Triggers alert notifications.
- * Since we are migrating to Firebase Cloud Messaging (FCM) and the backend will handle
- * the actual sending in the next phase, this is a placeholder/stub for now.
- * 
- * @param alertId - The ID of the active alert
- */
 export async function sendAlertNotifications(alertId: string): Promise<void> {
-  console.log('[FCM] sendAlertNotifications triggered for alertId:', alertId);
-  console.log('[FCM] Actual notification dispatch will be handled by the backend in the next phase.');
+  console.log('[ALERT]\nPreparing emergency dispatch');
+
+  try {
+    const user = getCurrentUser();
+    if (!user || !user.uid) {
+      console.error('[ALERT]\nEmergency dispatch failed: No authenticated user');
+      return;
+    }
+
+    const uid = user.uid;
+    console.log(`[ALERT]\nAuthenticated UID:\n${uid}`);
+    console.log(`[ALERT]\nDispatching alert:\n${alertId}`);
+
+    const payload = {
+      uid,
+      alertId
+    };
+
+    const urls = getBackendRoute('/api/alerts/send');
+    console.log('[API]\nPOST /api/alerts/send');
+
+    let success = false;
+    let lastError = null;
+
+    for (const url of urls) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[ALERT]\nEmergency dispatch response data:', JSON.stringify(data, null, 2));
+          success = true;
+          break;
+        } else {
+          const errText = await response.text();
+          console.warn(`[ALERT] Backend returned non-2xx status at ${url}: ${response.status}`, errText);
+          lastError = new Error(`Status ${response.status}: ${errText}`);
+        }
+      } catch (fetchErr: any) {
+        console.warn(`[ALERT] Failed to connect to backend at ${url}:`, fetchErr.message);
+        lastError = fetchErr;
+      }
+    }
+
+    if (success) {
+      console.log('[ALERT]\nEmergency dispatch successful');
+    } else {
+      console.error('[ALERT]\nEmergency dispatch failed:', lastError?.message || 'Unknown error');
+    }
+  } catch (error: any) {
+    console.error('[ALERT]\nEmergency dispatch failed:', error.message || error);
+  }
 }
 
 /**
