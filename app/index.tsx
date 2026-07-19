@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../src/services/firebase';
 import { Button } from '../components/Button';
 import { Colors } from '../constants/theme';
 
@@ -15,27 +17,65 @@ export default function SplashScreen() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const checkCarouselOnboarding = async () => {
-      try {
-        const carouselCompleted = await AsyncStorage.getItem('responza_carousel_onboarding_completed');
-        if (carouselCompleted !== 'true') {
-          router.replace('/onboarding' as any);
-          return;
-        }
+    let isMounted = true;
+    let authResolved = false;
+    let onboardingResolved = false;
+    let resolvedUser: any = null;
+    let carouselCompleted = false;
+    let permissionsCompleted = false;
+    let hasRouted = false; // Simple guard to ensure navigation happens only once
 
-        const permissionsCompleted = await AsyncStorage.getItem('responza_onboarding_completed');
-        if (permissionsCompleted !== 'true') {
-          router.replace('/permissions' as any);
-          return;
-        }
+    const checkAll = () => {
+      if (!authResolved || !onboardingResolved) return;
+      if (!isMounted) return;
+      if (hasRouted) return;
 
-        setChecking(false);
-      } catch (err) {
-        console.error('[SPLASH] Failed to check onboarding status:', err);
+      // 1. Guard check onboarding first
+      if (!carouselCompleted) {
+        hasRouted = true;
+        router.replace('/onboarding' as any);
+        return;
+      }
+      if (!permissionsCompleted) {
+        hasRouted = true;
+        router.replace('/permissions' as any);
+        return;
+      }
+
+      // 2. Onboarding complete -> check auth state
+      if (resolvedUser) {
+        hasRouted = true;
+        router.replace('/home' as any);
+      } else {
         setChecking(false);
       }
     };
-    checkCarouselOnboarding();
+
+    const checkOnboarding = async () => {
+      try {
+        const carousel = await AsyncStorage.getItem('responza_carousel_onboarding_completed');
+        const permissions = await AsyncStorage.getItem('responza_onboarding_completed');
+        carouselCompleted = carousel === 'true';
+        permissionsCompleted = permissions === 'true';
+      } catch (err) {
+        console.error('[SPLASH] Failed to check onboarding status:', err);
+      } finally {
+        onboardingResolved = true;
+        checkAll();
+      }
+    };
+    checkOnboarding();
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      resolvedUser = user;
+      authResolved = true;
+      checkAll();
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [router]);
 
   if (checking) {
