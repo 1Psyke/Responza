@@ -26,6 +26,11 @@ export interface AlertDocument {
     mapLink?: string;
     timestamp?: number;
   } | null;
+  senderName?: string;
+  senderPhone?: string;
+  senderMedicalInfo?: any;
+  senderEmergencyNote?: string;
+  recipientUids?: string[];
 }
 
 /**
@@ -47,6 +52,31 @@ export async function createAlert(
     const alertsCollectionRef = collection(db, 'alerts');
     const newDocRef = doc(alertsCollectionRef); // Generates a unique alert ID
     
+    // Fetch sender profile details to embed in the alert document
+    let senderName = 'A User';
+    let senderPhone = '';
+    let senderMedicalInfo = null;
+    let senderEmergencyNote = '';
+    
+    try {
+      const userDocRef = doc(db, 'users', uid);
+      const userSnap = await getDoc(userDocRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        senderName = userData.name || 'A User';
+        senderPhone = userData.phone || '';
+        senderMedicalInfo = userData.medicalInfo || null;
+        senderEmergencyNote = userData.emergencyNote || '';
+      }
+    } catch (profileErr) {
+      console.warn('[ALERTS] Failed to load sender profile for embedding:', profileErr);
+    }
+
+    // Extract any pre-existing recipient UIDs from the contacts array
+    const recipientUids: string[] = contacts
+      .map((c) => c.uid || c.contactUid)
+      .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+    
     const alertData: AlertDocument = {
       id: newDocRef.id,
       uid,
@@ -56,7 +86,12 @@ export async function createAlert(
       resolvedAt: null,
       cancelReason: null,
       contacts,
-      location: location || null
+      location: location || null,
+      senderName,
+      senderPhone,
+      senderMedicalInfo,
+      senderEmergencyNote,
+      recipientUids
     };
 
     await setDoc(newDocRef, alertData);

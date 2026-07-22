@@ -30,6 +30,11 @@ export default function SplashScreen() {
       if (!isMounted) return;
       if (hasRouted) return;
 
+      // Check if a deep link is active to avoid resetting navigation
+      if ((global as any).isEmergencyDeepLinkActive) {
+        return;
+      }
+
       // 1. Guard check onboarding first
       if (!carouselCompleted) {
         hasRouted = true;
